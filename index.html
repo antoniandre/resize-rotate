@@ -1,0 +1,104 @@
+<html>
+<head>
+	<style>
+	html, body {height: 100%;}
+
+	#square {
+		width: 100px;
+		height: 100px;
+		margin: 20% auto;
+		background: orange;
+		position: relative;
+	}
+	.handle * {
+		position: absolute;
+		width: 20px;
+		height: 20px;
+		background: turquoise;
+		border-radius: 20px;
+	}
+	.resize {
+		bottom: -10px;
+		right: -10px;
+		cursor: nwse-resize;
+	}
+	.rotate {
+		top: -10px;
+		right: -10px;
+		cursor: alias;
+	}
+	</style>
+	<script type="text/javascript" src="js/jquery.js"></script>
+	<script>
+		$(document).ready(function()
+		{
+			new resizeRotate('#square');
+		});
+
+		var resizeRotate = function(targetElement)
+		{
+			var self = this;
+			self.target = $(targetElement);
+			self.handles = $('<div class="handle"><div class="resize" data-position="bottom-right"></div><div class="rotate"></div></div>');
+			self.currentRotation = 0;
+			self.positions = ['bottom-right', 'bottom-left', 'top-left', 'top-right'];
+
+			self.bindEvents = function()
+			{
+				self.handles
+					//=============================== Resize ==============================//
+					.on('mousedown', '.resize', function(e)
+					{
+						// Attach mouse move event only when first clicked.
+						$(document).on('mousemove', function(e)
+						{
+							var topLeft = self.target.offset(),
+								bottomRight = {x: topLeft.left + self.target.width(), y: topLeft.top + self.target.height()},
+								delta = {x: e.pageX - bottomRight.x, y: e.pageY - bottomRight.y};
+
+							self.target.css({width: '+=' + delta.x, height: '+=' + delta.y});
+						})
+						.one('mouseup', function(e)
+						{
+							// When releasing handle, round up width and height values :)
+							self.target.css({width: parseInt(self.target.width()), height: parseInt(self.target.height())});
+							$(document).off('mousemove');
+						});
+					})
+					//============================== Rotate ===============================//
+					.on('mousedown', '.rotate', function(e)
+					{
+						// Attach mouse move event only when first clicked.
+						$(document).on('mousemove', function(e)
+						{
+							var topLeft = self.target.offset(),
+								center = {x: topLeft.left + self.target.width() / 2, y: topLeft.top + self.target.height() / 2},
+								rad = Math.atan2(e.pageX - center.x, e.pageY - center.y),
+								deg = (rad * (180 / Math.PI) * -1) + 135;
+
+							self.currentRotation = deg;
+							console.log(rad, deg);
+							self.target.css({transform: 'rotate(' + (deg)+ 'deg)'});
+						})
+						.one('mouseup', function(e)
+						{
+							$(document).off('mousemove');
+							console.log(self.positions[parseInt(self.currentRotation/90-45)]);
+							$('.handle.resize').attr('data-position', self.positions[parseInt(self.currentRotation/90-45)]);
+						});
+					});
+			};
+			self.init = function()
+			{
+				self.bindEvents();
+				self.target.append(self.handles.clone(true));
+			}();
+		}
+	</script>
+</head>
+<body>
+	<div id="all">
+		<div id="square"></div>
+	</div>
+</body>
+</html>
